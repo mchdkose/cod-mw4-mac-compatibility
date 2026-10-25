@@ -51,8 +51,17 @@ sub prepare_runtime {
  run('/usr/bin/codesign','--force','--sign','-','--identifier','ntdll-55554944adc455845ef73829b5b976d2d9b8e0d4',"$native/ntdll.so");
  my$audio=read_file("$r/x86_64-unix/winecoreaudio.so");
  my$old='@rpath/winecoreaudio.so'.chr(0);my$new='@rpath/sp26audio.so'.chr(0);
- die "Audio preparation could not recognize this CrossOver runtime. Try the recommended CrossOver Preview setup.\n" unless substr($audio,0x608,length($old)) eq $old && substr($audio,0x5105,3) eq pack('H*','0f47c6');
- substr($audio,0x608,length($old))=$new.chr(0)x(length($old)-length($new));substr($audio,0x5105,3)=pack('H*','909090');
+ # Locate the cmova fix site by its surrounding instructions instead of a fixed
+ # offset, so CrossOver builds where the code moved are still supported.
+ my($site,$hits,$pos,$cmova)=(-1,0,0,pack('H*','0f47c6'));
+ while(($pos=index($audio,$cmova,$pos))>=0){
+  if($pos>=8 && substr($audio,$pos-8,2) eq pack('H*','3953') && substr($audio,$pos-5,5) eq pack('H*','b800000000')
+   && substr($audio,$pos+3,4) eq pack('H*','01d08943') && substr($audio,$pos-6,1) eq substr($audio,$pos+7,1)){$site=$pos;$hits++;}
+  $pos++;
+ }
+ print STDERR sprintf("AUDIO_FIX_SITE=0x%x HITS=%d\n",$site,$hits);
+ die "Audio preparation could not recognize this CrossOver runtime (fix sites found: $hits).\n" unless substr($audio,0x608,length($old)) eq $old && $hits==1;
+ substr($audio,0x608,length($old))=$new.chr(0)x(length($old)-length($new));substr($audio,$site,3)=pack('H*','909090');
  write_file("$out/sp26coreaudio.so",$audio);
  run('/usr/bin/codesign','--force','--sign','-','--identifier','winecoreaudio_probe-55554944af16194c7dbd392a9b3d362eb19d601d',"$out/sp26coreaudio.so");
  for my$p("$native/ntdll.so","$native/sp26.dylib","$out/sp26coreaudio.so"){run('/usr/bin/codesign','--verify','--strict',$p);}

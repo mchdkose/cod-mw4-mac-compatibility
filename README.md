@@ -34,7 +34,10 @@ Textures require **Python 3.10+** and a large separate download. The size and av
 
 ## Recommended setup
 
-- CrossOver Preview with D3DMetal 4.0b3.
+> **Required CrossOver version:** you have to download this version of CrossOver: **`crossover-preview-20261015.zip`**.
+> ⚠️ **Do NOT use the ARM64 build.** Download the standard (non-ARM64) `crossover-preview-20261015.zip`.
+
+- CrossOver Preview (`crossover-preview-20261015.zip`, **not the ARM64 build**) with D3DMetal 4.0b3.
 - Select **D3DMetal** as the graphics backend for your game bottle.
 - Enable **Metal 4** and **MSync** in CrossOver for your game bottle (recommended).
 
